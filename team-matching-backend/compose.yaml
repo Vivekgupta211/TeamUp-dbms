@@ -1,0 +1,44 @@
+services:
+  db:
+    image: mysql:8.4
+    command: ["--log-bin-trust-function-creators=1"]
+    environment:
+      MYSQL_ROOT_PASSWORD: local_root_password
+      MYSQL_DATABASE: team_matching_system
+      MYSQL_USER: team_app
+      MYSQL_PASSWORD: team_dev_password
+    ports:
+      - "127.0.0.1:3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysql --protocol=TCP -h127.0.0.1 -u$$MYSQL_USER -p$$MYSQL_PASSWORD -D$$MYSQL_DATABASE -e 'SELECT 1' >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+  init:
+    build: .
+    command: ["python", "-m", "scripts.init_db"]
+    environment: &db_env
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: team_app
+      DB_PASSWORD: team_dev_password
+      DB_NAME: team_matching_system
+    depends_on:
+      db:
+        condition: service_healthy
+    profiles: ["setup"]
+  api:
+    build: .
+    environment:
+      <<: *db_env
+      API_KEY: ${API_KEY:-}
+      CORS_ORIGINS: ${CORS_ORIGINS:-["http://localhost:5173","http://localhost:3000"]}
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+volumes:
+  mysql_data:

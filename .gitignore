@@ -1,0 +1,19 @@
+
+# Environment files and secrets
+.env
+.env.*
+!.env.example
+
+# Node.js
+node_modules/
+dist/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Local database and generated files
+*.sql.gz
+*.sqlite3
